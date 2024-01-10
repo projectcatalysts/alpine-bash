@@ -1,8 +1,8 @@
+# Alpine Linux plus bash
 ARG base_image
-ARG package_version
+FROM ${base_image}
 
-# AlpineLinux plus bash
-FROM "${base_image}"
+ARG package_version
 LABEL package_version="${package_version}"
 
 # do all in one step
