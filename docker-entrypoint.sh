@@ -15,8 +15,8 @@ function create_user_and_group {
 		echo "entrypoint.sh : running as default user ${DEFAULT_UID}:${DEFAULT_GID}..."
 		return 1
 	fi
-	if [[ -z "${HOST_UNAME+x}" ]]; then
-	    HOST_UNAME="host"
+	if [[ -z "${HOST_USER+x}" ]]; then
+	    HOST_USER="host"
 	fi
 
 	if user_exists ${HOST_UID}; then
@@ -24,34 +24,34 @@ function create_user_and_group {
 	    return 0
 	fi
 
-	echo "entrypoint.sh : configuring user '${HOST_UNAME}' : ${HOST_UID}:${HOST_GID}..."
+	echo "entrypoint.sh : configuring user '${HOST_USER}' : ${HOST_UID}:${HOST_GID}..."
 
-	addgroup -g ${HOST_GID} -S "${HOST_UNAME}"
-	if [[ -d "/home/${HOST_UNAME}" ]]; then
+	addgroup -g ${HOST_GID} -S "${HOST_USER}"
+	if [[ -d "/home/${HOST_USER}" ]]; then
 	    echo "entrypoint.sh : adding user with existing home directory..."
-		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_UNAME}" --ingroup ${HOST_UNAME} --no-create-home "${HOST_UNAME}" "${HOST_UNAME}"	
-		chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}"
+		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_USER}" --ingroup ${HOST_USER} --no-create-home "${HOST_USER}" "${HOST_USER}"	
+		chown ${HOST_UID}:${HOST_GID} "/home/${HOST_USER}"
 	else
 	    echo "entrypoint.sh : adding user and creating home directory..."
-		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_UNAME}" --ingroup ${HOST_UNAME} "${HOST_UNAME}"
+		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_USER}" --ingroup ${HOST_USER} "${HOST_USER}"
 	fi
-	export HOME="/home/${HOST_UNAME}"
+	export HOME="/home/${HOST_USER}"
 	return 0
 }
 
 # Create a user and group to match the host
 if create_user_and_group; then
-    echo "entrypoint.sh : switching to user '${HOST_UNAME}' (${HOST_UID}:${HOST_GID})..."
+    echo "entrypoint.sh : switching to user '${HOST_USER}' (${HOST_UID}:${HOST_GID})..."
 	# If there is no known_hosts file for the user, copy the known_hosts from the root user
-	if [[ ! -f "/home/${HOST_UNAME}/.ssh/known_hosts" ]]; then
+	if [[ ! -f "/home/${HOST_USER}/.ssh/known_hosts" ]]; then
 	    if [[ -f "/root/.ssh/known_hosts" ]]; then
-			echo "entrypoint.sh : creating /home/${HOST_UNAME}/.ssh/known_hosts..."	
-			if [[ ! -d "/home/${HOST_UNAME}/.ssh" ]]; then
-				mkdir -p "/home/${HOST_UNAME}/.ssh"
-			    chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}/.ssh"
+			echo "entrypoint.sh : creating /home/${HOST_USER}/.ssh/known_hosts..."	
+			if [[ ! -d "/home/${HOST_USER}/.ssh" ]]; then
+				mkdir -p "/home/${HOST_USER}/.ssh"
+			    chown ${HOST_UID}:${HOST_GID} "/home/${HOST_USER}/.ssh"
 	    	fi
-		    cp "/root/.ssh/known_hosts" "/home/${HOST_UNAME}/.ssh/known_hosts"
-			chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}/.ssh/known_hosts"
+		    cp "/root/.ssh/known_hosts" "/home/${HOST_USER}/.ssh/known_hosts"
+			chown ${HOST_UID}:${HOST_GID} "/home/${HOST_USER}/.ssh/known_hosts"
 		fi
 	fi
 	if [[ $# -gt 0 ]]; then
