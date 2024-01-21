@@ -31,9 +31,6 @@ function create_user_and_group {
 	    echo "entrypoint.sh : adding user with existing home directory..."
 		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_UNAME}" --ingroup ${HOST_UNAME} --no-create-home "${HOST_UNAME}" "${HOST_UNAME}"	
 		chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}"
-		if [[ -d "/home/${HOST_UNAME}/.ssh" ]]; then
-		    chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}/.ssh"
-	    fi
 	else
 	    echo "entrypoint.sh : adding user and creating home directory..."
 		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_UNAME}" --ingroup ${HOST_UNAME} "${HOST_UNAME}"
@@ -45,6 +42,18 @@ function create_user_and_group {
 # Create a user and group to match the host
 if create_user_and_group; then
     echo "entrypoint.sh : switching to user '${HOST_UNAME}' (${HOST_UID}:${HOST_GID})..."
+	# If there is no known_hosts file for the user, copy the known_hosts from the root user
+	if [[ ! -f "/home/${HOST_UNAME}/.ssh/known_hosts" ]]; then
+	    if [[ -f "/root/.ssh/known_hosts" ]]; then
+			echo "entrypoint.sh : creating /home/${HOST_UNAME}/.ssh/known_hosts..."	
+			if [[ ! -d "/home/${HOST_UNAME}/.ssh" ]]; then
+				mkdir -p "/home/${HOST_UNAME}/.ssh"
+			    chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}/.ssh"
+	    	fi
+		    cp "/root/.ssh/known_hosts" "/home/${HOST_UNAME}/.ssh/known_hosts"
+			chown ${HOST_UID}:${HOST_GID} "/home/${HOST_UNAME}/.ssh/known_hosts"
+		fi
+	fi
 	if [[ $# -gt 0 ]]; then
 		exec su-exec ${HOST_UID} "$@"
 	else
