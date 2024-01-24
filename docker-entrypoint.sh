@@ -46,7 +46,7 @@ function create_user_and_group {
 		# asked for a password when using
 		# sudo command and running apt by
 		# ammending sudoers file
-		echo '${HOST_USER} ALL=(ALL) NOPASSWD:/bin/apt' >> /etc/sudoers
+		echo '${HOST_USER} ALL=(ALL) NOPASSWD:/sbin/apk' >> /etc/sudoers
 	fi
 	return 0
 }
