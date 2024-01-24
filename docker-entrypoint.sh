@@ -36,6 +36,18 @@ function create_user_and_group {
 		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_USER}" --ingroup ${HOST_USER} "${HOST_USER}"
 	fi
 	export HOME="/home/${HOST_USER}"
+	if [[ ! -z "${HOST_UID_SUDO+x}" ]]; then
+	    # The user requires sudo privileges
+		apk update
+		apk add --no-cache sudo
+		#  Add new user docker to sudo group
+		adduser ${HOST_USER} sudo
+		# Ensure sudo group users are not
+		# asked for a password when using
+		# sudo command and running apt by
+		# ammending sudoers file
+		echo '${HOST_USER} ALL=(ALL) NOPASSWD:/bin/apt' >> /etc/sudoers
+	fi
 	return 0
 }
 
