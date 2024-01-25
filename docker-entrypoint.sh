@@ -36,17 +36,22 @@ function create_user_and_group {
 		adduser --uid ${HOST_UID} --disabled-password --gecos "" --home "/home/${HOST_USER}" --ingroup ${HOST_USER} "${HOST_USER}"
 	fi
 	export HOME="/home/${HOST_USER}"
-	if [[ ! -z "${HOST_USER_SUDO_APK+x}" ]]; then
-		if [[ "${HOST_USER_SUDO_APK}" == "REQUIRED" ]]; then
-			echo "entrypoint.sh : configuring user '${HOST_USER}' for sudo : apk"
-			# The user requires sudo privileges
-			apk update
-			apk add --no-cache sudo
-			# Ensure the user is not asked for a password when using
-			# sudo command apt by
-			# ammending sudoers file
-			echo "${HOST_USER} ALL=(ALL) NOPASSWD:/sbin/apk" >> /etc/sudoers
-		fi
+	#
+	# Ensure the user is not asked for a password when using sudo for the commands defined in sudoers_commands
+	#
+	local sudoers_commands=()
+	if [[ "${HOST_USER_SUDO_APK:-}" == "REQUIRED" ]]; then
+		echo "entrypoint.sh : configuring user '${HOST_USER}' for sudo : apk"
+		local sudoers_commands+=('/sbin/apk')
+	fi
+	if [ ${#sudoers_commands[@]} -gt 0 ]; then
+		# The user requires sudo privileges
+		apk update
+		apk add --no-cache sudo
+		local c
+		for c in "${sudoers_commands[@]}"; do
+		    echo "${HOST_USER} ALL=(ALL) NOPASSWD:${c}" >> /etc/sudoers
+		done
 	fi
 	return 0
 }

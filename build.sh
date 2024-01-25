@@ -13,6 +13,30 @@ function build_alpine_bash {
     local readonly base_image="${PROCAT_CI_REGISTRY_SERVER}/procat/docker/alpine-linux:${package_version}"
     local readonly build_args="--build-arg base_image=${base_image}"
 
+    # Create a combined known_hosts file.
+    # PROCAT_CI_HOST_KEYS_URL can be specified as an HTTP server URL that returns directory listings in JSON format, such as caddy.
+    # e.g.
+    #
+    #    export PROCAT_CI_HOST_KEYS_URL="http://build.example.com/host_keys/"
+    #
+    if [ -n ${PROCAT_CI_HOST_KEYS_URL+x} ]; then
+        if [ -f ./known_hosts ]; then
+            rm ./known_hosts
+        fi
+        # Return just the file names, with anything starting with 'README.' excluded.
+        local host_key_files=
+        readarray -t host_key_files < <(curl --silent -H 'Accept: application/json' "${PROCAT_CI_HOST_KEYS_URL}" | jq -r '.[] | select( .name | startswith("README.") | not ) | .name')
+		for file_name in "${host_key_files[@]}"; do
+            local file_path="${PROCAT_CI_HOST_KEYS_URL}${file_name}"
+            echo "Appending known_hosts from ${file_path}..."
+            echo "# $file_name" >> known_hosts
+            curl --silent "${file_path}" >> known_hosts
+	    done
+    fi
+    if [ ! -f ./known_hosts ]; then
+        echo '' > known_hosts
+    fi
+
     # Build the docker image
 	procat_ci_docker_build_image ${no_cache_flag} ${package_name} ${package_push} ${package_version} ${package_is_latest} "${build_args}"
 }

@@ -11,4 +11,5 @@ RUN apk add --no-cache bash && \
 	apk add --no-cache curl
 
 COPY docker-entrypoint.sh /usr/local/bin
+COPY known_hosts /root/.ssh/known_hosts
 ENTRYPOINT ["docker-entrypoint.sh"]
